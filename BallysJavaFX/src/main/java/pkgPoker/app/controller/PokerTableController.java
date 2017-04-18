@@ -178,25 +178,33 @@ public class PokerTableController implements Initializable {
 	//TODO: Lab #4 Complete the implementation
 	public void Handle_TableState(Table HubPokerTable) {
 		HashMap<UUID, Player> playerList = HubPokerTable.GetTablePlayers();
-		for(int i = 1; i <= 2; i++){ //Number of positions
-			for(int j = 0; j < playerList.size(); j++)
-				if(playerList.get(j).getiPlayerPosition() == i){
-					lblPos1Name.setText(playerList.get(j).getPlayerName());
-					if(mainApp.getPlayer().getPlayerID().equals(playerList.get(j).getPlayerID())){
-						if(i == 1)
-							btnPos1SitLeave.setText("Leave");
-						else if(i == 2)
-							btnPos2SitLeave.setText("Leave");
-					}
-					else{
-						if(i == 1)
-							lblPlayerPos1.setText("-Taken-");
-						else if(i == 2)
-							lblPlayerPos2.setText("-Taken-");
-					}
-					i = 3; //Number of positions + 1
-				}
+		Player thisPlayer = mainApp.getPlayer();
+		int numPos = 2;
+		ArrayList<Boolean> spotsTaken = new ArrayList<Boolean>();
+		for(int n = 0; n < numPos; n++)
+			spotsTaken.add(false);
+		for(Player plyr : playerList.values()){
+			if(plyr.getiPlayerPosition() == 1){
+				lblPos1Name.setText(plyr.getPlayerName());
+				spotsTaken.set(0, true);
+				if(plyr.getPlayerID().equals(thisPlayer.getPlayerID()))
+					btnPos1SitLeave.setText("Leave");
+				else
+					btnPos1SitLeave.setText("-Taken-");
+			}
+			else if(plyr.getiPlayerPosition() == 2){
+				lblPos2Name.setText(plyr.getPlayerName());
+				spotsTaken.set(1, true);
+				if(plyr.getPlayerID().equals(thisPlayer.getPlayerID()))
+					btnPos2SitLeave.setText("Leave");
+				else
+					btnPos2SitLeave.setText("-Taken-");
+			}	
 		}
+		if(spotsTaken.get(0) == false)
+			btnPos1SitLeave.setText("Sit");
+		if(spotsTaken.get(1) == false)
+			btnPos2SitLeave.setText("Sit");
 	}
 
 	public void Handle_GameState(GamePlay HubPokerGame) {
