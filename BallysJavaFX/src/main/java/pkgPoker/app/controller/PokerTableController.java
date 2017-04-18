@@ -88,6 +88,8 @@ public class PokerTableController implements Initializable {
 
 	@FXML
 	private HBox hboxCommunity;
+	
+	private boolean canStart = false;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -108,30 +110,23 @@ public class PokerTableController implements Initializable {
 
 	//TODO: Lab #4 - Complete (fix) setiPlayerPosition
 	public void btnSitLeave_Click(ActionEvent event) {
-		Action action = null;
-		Button btn = (Button)event.getSource();
-		if(btn.equals(btnPos1SitLeave)){
-			if (mainApp.getPlayer().getiPlayerPosition() == 1){
-				action = new Action(eAction.Leave, mainApp.getPlayer());
-			}
-			else{
-				action = new Action(eAction.Sit, mainApp.getPlayer());
+		ToggleButton btn = (ToggleButton)event.getSource();
+		if(btn == btnPos1SitLeave){
+			// Set the PlayerPosition in the Player
+			if(mainApp.getPlayer().getiPlayerPosition() != 1)
 				mainApp.getPlayer().setiPlayerPosition(1);
-			}		
-			
+			else
+				mainApp.getPlayer().setiPlayerPosition(0);
 		}
-		else if(btn.equals(btnPos2SitLeave)){
-			if (mainApp.getPlayer().getiPlayerPosition() == 2){
-				action = new Action(eAction.Leave, mainApp.getPlayer());
-			}
-			else{
-				action = new Action(eAction.Sit, mainApp.getPlayer());
-				mainApp.getPlayer().setiPlayerPosition(2);
-			}			
+		else if(btn == btnPos2SitLeave){
+			// Set the PlayerPosition in the Player
+			mainApp.getPlayer().setiPlayerPosition(2);			
 		}
 
+		// Build an Action message
+		Action act = new Action(eAction.Sit, mainApp.getPlayer());
 		// Send the Action to the Hub
-		mainApp.messageSend(action);
+		mainApp.messageSend(act);
 	}
 
 	public void MessageFromMainApp(String strMessage) {
@@ -175,28 +170,39 @@ public class PokerTableController implements Initializable {
 
 	}
 
-	//TODO: Lab #4 Complete the implementation
 	public void Handle_TableState(Table HubPokerTable) {
 		HashMap<UUID, Player> playerList = HubPokerTable.GetTablePlayers();
-		for(int i = 1; i <= 2; i++){ //Number of positions
-			for(int j = 0; j < playerList.size(); j++)
-				if(playerList.get(j).getiPlayerPosition() == i){
-					lblPos1Name.setText(playerList.get(j).getPlayerName());
-					if(mainApp.getPlayer().getPlayerID().equals(playerList.get(j).getPlayerID())){
-						if(i == 1)
-							btnPos1SitLeave.setText("Leave");
-						else if(i == 2)
-							btnPos2SitLeave.setText("Leave");
-					}
-					else{
-						if(i == 1)
-							lblPlayerPos1.setText("-Taken-");
-						else if(i == 2)
-							lblPlayerPos2.setText("-Taken-");
-					}
-					i = 3; //Number of positions + 1
+		Player thisPlayer = mainApp.getPlayer();
+		int playerIn = 0;
+		btnPos1SitLeave.setText("");
+		btnPos2SitLeave.setText("");
+		for(Player plyr : playerList.values()){
+			if(plyr.getiPlayerPosition() == 1){
+				playerIn++;
+				lblPos1Name.setText(plyr.getPlayerName());
+				if(plyr.getPlayerID().equals(thisPlayer.getPlayerID())){
+					btnPos1SitLeave.setText("Leave");
 				}
+				else
+					btnPos1SitLeave.setText("-Taken-");
+			}
+			else if(plyr.getiPlayerPosition() == 2){
+				playerIn++;
+				lblPos2Name.setText(plyr.getPlayerName());
+				if(plyr.getPlayerID().equals(thisPlayer.getPlayerID()))
+					btnPos2SitLeave.setText("Leave");
+				else
+					btnPos2SitLeave.setText("-Taken-");
+			}	
 		}
+		if(btnPos1SitLeave.getText() == "")
+			btnPos1SitLeave.setText("Sit");
+		if(btnPos2SitLeave.getText() == "")
+			btnPos2SitLeave.setText("Sit");
+		if(playerIn >= 2)
+			canStart = true;
+		else
+			canStart = false;
 	}
 
 	public void Handle_GameState(GamePlay HubPokerGame) {
@@ -217,17 +223,21 @@ public class PokerTableController implements Initializable {
 
 	@FXML
 	void btnStart_Click(ActionEvent event) {
-		// Start the Game
-		Action act = new Action(eAction.StartGame, mainApp.getPlayer());
-
-		// figure out which game is selected in the menu
-		eGame gme = eGame.getGame(Integer.parseInt(mainApp.getRuleName().replace("PokerGame", "")));
-
-		// Set the gme in the action
-		act.seteGame(gme);
-
-		// Send the Action to the Hub
-		mainApp.messageSend(act);
+		if(canStart){
+			// Start the Game
+			Action act = new Action(eAction.StartGame, mainApp.getPlayer());
+	
+			// figure out which game is selected in the menu
+			eGame gme = eGame.getGame(Integer.parseInt(mainApp.getRuleName().replace("PokerGame", "")));
+	
+			// Set the gme in the action
+			act.seteGame(gme);
+	
+			// Send the Action to the Hub
+			mainApp.messageSend(act);
+		}
+		else
+			System.out.println("Two players must be sitting to begin.");
 	}
 
 	@FXML
